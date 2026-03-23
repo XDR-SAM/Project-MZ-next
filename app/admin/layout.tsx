@@ -32,13 +32,29 @@ export default function AdminLayout({
   async function checkAuth() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
       
-      if (!session && pathname !== '/admin/login') {
-        router.push('/admin/login');
+      if (!session) {
+        setIsAuthenticated(false);
+        if (pathname !== '/admin/login') {
+          router.push('/admin/login');
+        }
       } else {
-        setLoading(false);
+        // Optional: Check if user email is in allowed admins list
+        const allowedEmails = ['your-email@example.com', 'admin@yourcompany.com'];
+        const userEmail = session.user.email;
+        
+        // Uncomment to restrict to specific emails:
+        // const isAdmin = allowedEmails.includes(userEmail || '');
+        // setIsAuthenticated(isAdmin);
+        
+        // For now, allow any authenticated user (remove this line when restricting)
+        setIsAuthenticated(true);
+        
+        if (!isAuthenticated && pathname !== '/admin/login') {
+          router.push('/admin/login');
+        }
       }
+      setLoading(false);
     } catch (error) {
       console.error('Auth check error:', error);
       setLoading(false);
