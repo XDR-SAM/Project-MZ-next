@@ -1,70 +1,50 @@
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
-import rehypePrettyCode from "rehype-pretty-code";
-import rehypeStringify from "rehype-stringify";
-import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
-import remarkRehype from "remark-rehype";
-import { unified } from "unified";
+import { getAllPosts, getPostBySlug } from "./supabase-data";
 
 type Metadata = {
   title: string;
   publishedAt: string;
   summary: string;
   image?: string;
+  tag?: string[];
 };
 
-function getMDXFiles(dir: string) {
-  return fs.readdirSync(dir).filter((file) => path.extname(file) === ".mdx");
-}
-
 export async function markdownToHTML(markdown: string) {
-  const p = await unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkRehype)
-    .use(rehypePrettyCode, {
-      // https://rehype-pretty.pages.dev/#usage
-      theme: {
-        light: "min-light",
-        dark: "min-dark",
-      },
-      keepBackground: false,
-    })
-    .use(rehypeStringify)
-    .process(markdown);
-
-  return p.toString();
+  // For now, return markdown as-is since we're storing HTML in the database
+  // If you want to process markdown on the fly, add your unified pipeline here
+  return markdown;
 }
 
 export async function getPost(slug: string) {
-  const filePath = path.join("content", `${slug}.mdx`);
-  const source = fs.readFileSync(filePath, "utf-8");
-  const { content: rawContent, data: metadata } = matter(source);
-  const content = await markdownToHTML(rawContent);
+  const post = await getPostBySlug(slug);
+  
+  if (!post) {
+    throw new Error(`Post not found: ${slug}`);
+  }
+  
   return {
-    source: content,
-    metadata,
-    slug,
+    source: post.content, // This is already HTML from Supabase
+    metadata: {
+      title: post.title,
+      summary: post.excerpt,
+      publishedAt: post.published_at,
+      image: post.featured_image_url,
+      tag: post.tags?.map((t: { name: string }) => t.name),
+    },
+    slug: post.slug,
   };
 }
 
-async function getAllPosts(dir: string) {
-  const mdxFiles = getMDXFiles(dir);
-  return Promise.all(
-    mdxFiles.map(async (file) => {
-      const slug = path.basename(file, path.extname(file));
-      const { metadata, source } = await getPost(slug);
-      return {
-        metadata,
-        slug,
-        source,
-      };
-    })
-  );
-}
-
 export async function getBlogPosts() {
-  return getAllPosts(path.join(process.cwd(), "content"));
+  const posts = await getAllPosts();
+  return posts.map(post => ({
+    metadata: {
+      title: post.title,
+      summary: post.excerpt,
+      publishedAt: post.published_at,
+      image: post.featured_image_url,
+      tag: post.tags?.map((t: { name: string }) => t.name),
+    },
+    slug: post.slug,
+    source: post.content,
+  }));
 }

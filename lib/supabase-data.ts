@@ -1,14 +1,26 @@
+import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from './supabase'
 import type { Post, CaseStudy, Tag, Author } from '@/types/supabase'
 
 /**
+ * Create a public Supabase client for unauthenticated requests
+ * This is used for public pages (blogs, case studies) and build-time generation
+ */
+function createPublicClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+/**
  * Public data fetching functions (for client-facing pages)
- * These use SSR and are cached by Next.js
+ * These use the public client and work at build time and runtime
  */
 
 // Get all published posts
 export async function getAllPosts() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createPublicClient()
   
   const { data: posts, error } = await supabase
     .from('posts')
@@ -39,7 +51,7 @@ export async function getAllPosts() {
 
 // Get a single post by slug
 export async function getPostBySlug(slug: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createPublicClient()
   
   const { data: post, error } = await supabase
     .from('posts')
@@ -72,7 +84,7 @@ export async function getPostBySlug(slug: string) {
 
 // Get all published case studies
 export async function getAllCaseStudies() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createPublicClient()
   
   const { data: caseStudies, error } = await supabase
     .from('case_studies')
@@ -90,7 +102,7 @@ export async function getAllCaseStudies() {
 
 // Get all tags
 export async function getAllTags() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createPublicClient()
   
   const { data: tags, error } = await supabase
     .from('tags')
@@ -107,7 +119,7 @@ export async function getAllTags() {
 
 // Get posts by tag
 export async function getPostsByTag(tagSlug: string) {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createPublicClient()
   
   // First get the tag
   const { data: tag } = await supabase
@@ -197,7 +209,7 @@ export async function adminGetPostById(id: string) {
     .select('tag_id')
     .eq('post_id', id)
 
-  const tagIds = postTags?.map(pt => pt.tag_id) || []
+  const tagIds = postTags?.map((pt: { tag_id: string }) => pt.tag_id) || []
 
   return {
     ...post,

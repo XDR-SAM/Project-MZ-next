@@ -26,7 +26,30 @@ export default function AdminLayout({
   const supabase = createClient();
 
   useEffect(() => {
+    // Check active session first
     checkAuth();
+    
+    // Listen for auth changes (token refresh, logout, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setIsAuthenticated(true);
+        setLoading(false);
+        if (pathname !== '/admin/login') {
+          router.push('/admin/dashboard');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+        setLoading(false);
+        router.push('/admin/login');
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        setIsAuthenticated(true);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function checkAuth() {
@@ -39,19 +62,9 @@ export default function AdminLayout({
           router.push('/admin/login');
         }
       } else {
-        // Optional: Check if user email is in allowed admins list
-        const allowedEmails = ['your-email@example.com', 'admin@yourcompany.com'];
-        const userEmail = session.user.email;
-        
-        // Uncomment to restrict to specific emails:
-        // const isAdmin = allowedEmails.includes(userEmail || '');
-        // setIsAuthenticated(isAdmin);
-        
-        // For now, allow any authenticated user (remove this line when restricting)
         setIsAuthenticated(true);
-        
-        if (!isAuthenticated && pathname !== '/admin/login') {
-          router.push('/admin/login');
+        if (pathname === '/admin/login') {
+          router.push('/admin/dashboard');
         }
       }
       setLoading(false);
