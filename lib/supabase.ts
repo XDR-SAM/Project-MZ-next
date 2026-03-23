@@ -38,6 +38,7 @@ export async function createServerSupabaseClient() {
 }
 
 // Admin client with service role key (use carefully - has full permissions)
+// Only use this in Server Components or API routes
 export function createAdminSupabaseClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

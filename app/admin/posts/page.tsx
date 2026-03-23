@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import DeletePostButton from '@/components/admin/DeletePostButton';
 
 export default async function AdminPostsPage() {
   const supabase = await createServerSupabaseClient();
@@ -110,83 +111,5 @@ export default async function AdminPostsPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-// Client component for delete functionality
-"use client";
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
-function DeletePostButton({ postId }: { postId: string }) {
-  const router = useRouter();
-  const supabase = createBrowserSupabaseClient();
-  const [loading, setLoading] = useState(false);
-
-  async function handleDelete() {
-    setLoading(true);
-    
-    try {
-      // First delete associated tags
-      await supabase
-        .from('post_tags')
-        .delete()
-        .eq('post_id', postId);
-
-      // Then delete the post
-      const { error } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId);
-
-      if (error) throw error;
-
-      router.refresh();
-    } catch (error) {
-      console.error('Delete error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" disabled={loading}>
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete Post</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to delete this post? This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={loading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {loading ? 'Deleting...' : 'Delete'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

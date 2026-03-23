@@ -7,13 +7,13 @@
 1. Go to supabase.com → Sign in
 2. New Project → Fill details → Create
 3. Wait 2 minutes for setup
+``` 
+ 
+### 2. Run Database Migration (1 min) 
 ```
-
-### 2. Run Database Migration (1 min)
-```
-1. SQL Editor → New query
-2. Copy supabase-migration.sql contents
-3. Paste → Run
+1. SQL Editor → New query 
+2. Copy supabase-migration.sql contents 
+3. Paste → Run 
 ```
 
 ### 3. Create Storage Buckets (1 min)

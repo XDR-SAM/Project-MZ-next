@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-client';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createBrowserSupabaseClient();
+  const supabase = createClient();
 
   useEffect(() => {
     checkAuth();
